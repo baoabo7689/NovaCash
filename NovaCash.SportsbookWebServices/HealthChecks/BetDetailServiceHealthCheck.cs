@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NovaCash.Sportsbook.Clients.Extensions;
 
 namespace NovaCash.SportsbookWebServices.HealthChecks
 {
@@ -21,13 +22,8 @@ namespace NovaCash.SportsbookWebServices.HealthChecks
                 .GetRecurringJobs()
                 .FirstOrDefault(j => string.Equals(j.Id, "HangfireBetDetailWorker", StringComparison.OrdinalIgnoreCase));
 
-            var lastExecution = job.LastExecution.HasValue
-                ? TimeZoneInfo.ConvertTimeFromUtc(job.LastExecution.Value, TimeZoneInfo.Local)
-                : DateTime.MinValue;
-
-            var nextExecution = job.NextExecution.HasValue
-                ? TimeZoneInfo.ConvertTimeFromUtc(job.NextExecution.Value, TimeZoneInfo.Local)
-                : DateTime.MinValue;
+            var lastExecution = job.LastExecution.AddGMT(defaultValue: DateTime.MinValue);
+            var nextExecution = job.NextExecution.AddGMT(defaultValue: DateTime.MinValue);
 
             var message = $"ID: {job.Id}. Last Job State: {job.LastJobState}. Last Execution : {lastExecution}. Next Execution : {nextExecution}.";
             var isHealthy = nextExecution >= DateTime.Now.AddMinutes(-2);

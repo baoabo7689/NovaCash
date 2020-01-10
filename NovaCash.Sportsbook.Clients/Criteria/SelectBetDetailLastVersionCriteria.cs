@@ -1,11 +1,9 @@
-﻿using Fanex.Data.Repository;
-
-namespace NovaCash.Sportsbook.Clients.Criteria
+﻿namespace NovaCash.Sportsbook.Clients.Criteria
 {
-    public class SelectBetDetailLastVersionCriteria : CriteriaBase
+    public class SelectBetDetailLastVersionCriteria
     {
-        public override string GetSettingKey() => "SelectBetDetailLastVersion";
+        public string GetSettingKey() => "SelectBetDetailLastVersion";
 
-        public override bool IsValid() => true;
+        public bool IsValid() => true;
     }
 }

@@ -1,16 +1,15 @@
-﻿using Fanex.Data.Repository;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using NovaCash.Sportsbook.Clients.Models;
 
 namespace NovaCash.Sportsbook.Clients.Criteria
 {
-    public class InsertBetDetailCriteria : CriteriaBase
+    public class InsertBetDetailCriteria
     {
         public BetDetail BetDetail { get; set; }
 
-        public override string GetSettingKey() => "InsertBetDetail";
+        public string GetSettingKey() => "InsertBetDetail";
 
-        public override bool IsValid() => BetDetail.trans_id > 0;
+        public bool IsValid() => BetDetail.trans_id > 0;
 
         public string GetSpParams() => JsonConvert.SerializeObject(BetDetail);
     }

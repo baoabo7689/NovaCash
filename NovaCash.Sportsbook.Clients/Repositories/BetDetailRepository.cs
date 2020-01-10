@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using Fanex.Data;
-using Fanex.Data.Repository;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using NovaCash.Sportsbook.Clients.Configurations;
@@ -14,12 +12,6 @@ namespace NovaCash.Sportsbook.Clients.Repositories
     public class BetDetailRepository : IBetDetailRepository
     {
         private readonly string connectionString = AppSettings.Settings.BetDetailConnection;
-        private readonly IDynamicRepository dynamicRepository;
-
-        public BetDetailRepository(IDynamicRepository dynamicRepository = null)
-        {
-            this.dynamicRepository = dynamicRepository ?? new DynamicRepository();
-        }
 
         public void InsertBetDetailBatch(InsertBetDetailBatchCriteria criteria)
         {
@@ -75,9 +67,19 @@ namespace NovaCash.Sportsbook.Clients.Repositories
         public int SelectBetDetailLastVersion(SelectBetDetailLastVersionCriteria criteria)
         {
             var result = 0;
-            using (var objDb = ObjectDbFactory.CreateInstance(criteria.GetSettingKey()))
+
+            using (var conn = new MySqlConnection(connectionString))
             {
-                using (var reader = objDb.ExecuteReader(criteria))
+                conn.Open();
+
+                var cmd = new MySqlCommand(criteria.GetSettingKey(), conn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                cmd.ExecuteNonQuery();
+
+                using (var reader = cmd.ExecuteReader())
                 {
                     if (reader.Read())
                     {
@@ -94,7 +96,7 @@ namespace NovaCash.Sportsbook.Clients.Repositories
             MySqlTransaction sqlTxn,
             UpdateBetDetailLastVersionCriteria criteria)
         {
-            if (criteria.IsInvalid())
+            if (!criteria.IsValid())
             {
                 return;
             }
@@ -110,6 +112,34 @@ namespace NovaCash.Sportsbook.Clients.Repositories
         }
 
         public IEnumerable<BetDetail> SelectBetDetails(SelectBetDetailsCriteria criteria)
-            => dynamicRepository.Fetch<BetDetail>(criteria);
+        {
+            var result = new List<BetDetail>();
+
+            using (var conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+
+                var cmd = new MySqlCommand(criteria.GetSettingKey(), conn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        result.Add(new BetDetail
+                        {
+                            trans_id = Convert.ToInt64(reader["trans_id"]),
+                            vendor_member_id = Convert.ToString(reader["vendor_member_id"]),
+                            winlost_amount = Convert.ToDecimal(reader["winlost_amount"]),
+                            stake = Convert.ToDecimal(reader["stake"])
+                        });
+                    }
+                }
+            }
+
+            return result;
+        }
     }
 }

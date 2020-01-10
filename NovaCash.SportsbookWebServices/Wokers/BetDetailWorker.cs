@@ -1,4 +1,5 @@
-﻿using Hangfire;
+﻿using System;
+using Hangfire;
 using NovaCash.Sportsbook.Clients.Criteria;
 using NovaCash.Sportsbook.Clients.Repositories;
 using NovaCash.Sportsbook.Clients.Services;
@@ -12,7 +13,7 @@ namespace NovaCash.SportsbookWebServices.Wokers
             using (var server = new BackgroundJobServer())
             {
                 RecurringJob.RemoveIfExists("HangfireBetDetailWorker");
-                RecurringJob.AddOrUpdate("HangfireBetDetailWorker", () => GetBetDetails(), Cron.Minutely);
+                RecurringJob.AddOrUpdate("HangfireBetDetailWorker", () => GetBetDetails(), Cron.Minutely, TimeZoneInfo.Local);
             }
         }
 

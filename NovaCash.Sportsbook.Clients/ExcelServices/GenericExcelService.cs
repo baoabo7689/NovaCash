@@ -23,7 +23,7 @@ namespace NovaCash.Sportsbook.Clients.ExcelServices
             this.criteria = criteria;
         }
 
-        public static string GetOutputPath(string fileName)
+        public static void SaveFile(string fileName, ExcelPackage p)
         {
             var output = Path.Combine(Directory.GetCurrentDirectory(), AppSettings.Settings.ExcelFolder);
 
@@ -32,18 +32,14 @@ namespace NovaCash.Sportsbook.Clients.ExcelServices
                 Directory.CreateDirectory(output);
             }
 
-            return Path.Combine(output, fileName);
-        }
+            output = Path.Combine(output, fileName);
 
-        public static void SaveFile(string fileName, ExcelPackage p)
-        {
-            var output = GetOutputPath(fileName);
             p.SaveAs(new FileInfo(output));
         }
 
         public static void SetColumnWidths(ExcelWorksheet ws, int[] widths, int maxColumnIndex)
         {
-            if (widths == null || widths.Length == 0)
+            if (widths == null || !widths.Any())
             {
                 return;
             }
@@ -88,7 +84,7 @@ namespace NovaCash.Sportsbook.Clients.ExcelServices
                 }
                 else
                 {
-                    ExportEmptyData(ws);
+                    ws.Cells[1, 1].Value = Labels.ThereIsNoData;
                 }
 
                 SaveFile(criteria.FileName, p);
@@ -121,11 +117,6 @@ namespace NovaCash.Sportsbook.Clients.ExcelServices
 
                 currentRow++;
             }
-        }
-
-        public void ExportEmptyData(ExcelWorksheet ws)
-        {
-            ws.Cells[1, 1].Value = Labels.ThereIsNoData;
         }
     }
 }

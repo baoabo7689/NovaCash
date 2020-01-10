@@ -1,8 +1,5 @@
 ﻿using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using Fanex.Data;
-using Fanex.Data.MySql;
 using Microsoft.Extensions.Configuration;
 using NovaCash.Sportsbook.Clients.Models;
 
@@ -11,25 +8,26 @@ namespace NovaCash.Sportsbook.Clients.Configurations
     public class AppSettings
     {
         public static AppSettingModel Settings;
+        public static bool IsConsole = false;
 
-        public static void Load(string[] args = null)
+        public static void Load(string env)
         {
             if (Settings != null)
             {
                 return;
             }
 
-            SetCurrentDirectory(args);
+            var evnSuffix = string.IsNullOrWhiteSpace(env) ? string.Empty : $".{env}";
+            var settingFile = $"appsettings{evnSuffix}.json";
+            if (!File.Exists(Path.Combine(Directory.GetCurrentDirectory(), settingFile)))
+            {
+                SetCurrentDirectory();
+            }
+
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile(settingFile, optional: false, reloadOnChange: true)
                 .Build();
-
-            var connections = configuration
-              .GetSection("ConnectionStrings")
-              .GetChildren()
-              .ToDictionary(connection => connection.Key,
-                            connection => new ConnectionConfiguration(connection.Key, connection.Value));
 
             Settings = new AppSettingModel
             {
@@ -37,24 +35,15 @@ namespace NovaCash.Sportsbook.Clients.Configurations
                 APIVendorId = configuration.GetValue<string>("APIVendorId"),
                 Currency = configuration.GetValue<int>("Currency"),
                 HangfireConnection = configuration.GetValue<string>("HangfireConnection"),
-                BetDetailConnection = configuration.GetValue<string>("BetDetailConnection"),
-                StoreProceduresPath = configuration.GetValue<string>("StoreProceduresPath"),
-                ConnectionStrings = connections,
-                ExcelFolder = configuration.GetValue<string>("ExcelFolder")
+                BetDetailConnection = configuration.GetValue<string>("ConnectionStrings:BetDetailConnection"),
+                ExcelFolder = configuration.GetValue<string>("ExcelFolder"),
+                GMT = configuration.GetValue<int>("GMT")
             };
-
-            DbSettingProviderManager
-                .StartNewSession()
-                .Use(connections)
-                .WithMySql(resourcePath: Settings.StoreProceduresPath)
-                .Run();
         }
 
-        public static void SetCurrentDirectory(string[] args)
+        public static void SetCurrentDirectory()
         {
-            var isDebug = Debugger.IsAttached || args.Contains("--console");
-            if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "appSettings.json"))
-                || isDebug)
+            if (Debugger.IsAttached || IsConsole)
             {
                 return;
             }

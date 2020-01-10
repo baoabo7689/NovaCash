@@ -16,9 +16,10 @@ namespace NovaCash.SportsbookWebServices
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
+            AppSettings.Load(env.EnvironmentName);
         }
 
         public IConfiguration Configuration { get; }
@@ -79,7 +80,12 @@ namespace NovaCash.SportsbookWebServices
                 });
             });
 
-            app.UseHangfireDashboard();
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
+                IgnoreAntiforgeryToken = true
+            });
+
             new BetDetailWorker().Run();
         }
     }
